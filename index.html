@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydrate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" />
+</head>
+<body class="h-screen flex justify-center items-center dark:bg-[#2f343a]">
+    <div class="p-10 rounded-lg shadow-md w-80 relative dark:bg-transparent border border-gray-300 dark:border-[#3f4347]">
+        <h1 id="tracker-name" class="text-lg text-gray-700 font-bold mb-4 text-center dark:text-[#d3d3d3]">Hydrate Tracker</h1>
+        <div class="flex flex-col items-center">
+            <h2 id="current-intake" class="text-3xl font-bold text-gray-700 mb-4 dark:text-[#d3d3d3]">0ml</h2>
+            <div class="flex justify-between w-full mb-4">
+                <button id="small-glass-btn" class="bg-[#E7F3F8] hover:bg-[#d5e7f5] text-[#337EA9] font-bold py-2 px-4 rounded-lg dark:bg-[#3f4347] dark:hover:bg-[#3a3f45] mr-2">
+                    <i class="fa fa-glass-water mr-2"></i>
+                    <span class="text-xs">100ml</span>
+                </button>
+                <button id="medium-glass-btn" class="bg-[#E7F3F8] hover:bg-[#d5e7f5] text-[#337EA9] font-bold py-2 px-4 rounded-lg dark:bg-[#3f4347] dark:hover:bg-[#3a3f45] mr-2">
+                    <i class="fa fa-glass-water mr-2"></i>
+                    <span class="text-xs">200ml</span>
+                </button>
+                <button id="bottle-btn" class="bg-[#E7F3F8] hover:bg-[#d5e7f5] text-[#337EA9] font-bold py-2 px-4 rounded-lg dark:bg-[#3f4347] dark:hover:bg-[#3a3f45]">
+                    <i class="fa fa-bottle-water mr-2"></i>
+                    <span class="text-xs">500ml</span>
+                </button>
+            </div>
+            <div class="flex flex-col items-center">
+                <h2 id="goal" class="text-lg text-gray-700 font-bold mb-2 dark:text-[#d3d3d3]">Daily Goal: 0ml</h2>
+                <button id="set-goal-btn" class="bg-[#F1F1EF] hover:bg-[#e5e5e5] text-[#454B4E] font-bold py-2 px-4 rounded-lg dark:bg-[#454B4E] dark:hover:bg-[#3f4347] dark:text-[#979A9B]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-goal"><path d="M12 13V2l8 4-8 4"/><path d="M20.561 10.222a9 9 0 1 1-12.55-5.29"/><path d="M8.002 9.997a5 5 0 1 0 8.9 2.02"/></svg>
+                </button>
+            </div>
+        </div>
+        <!-- Modal for setting daily goal -->
+        <div id="goal-modal" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center">
+            <div class="p-10 rounded-lg shadow-md w-80 bg-[#F1F1EF] dark:bg-[#F1F1EF] border border-gray-300 dark:border-[#3f4347]">
+                <h2 class="text-lg text-gray-700 font-bold mb-4 dark:text-[#d3d3d3]">Set Daily Goal</h2>
+                <input type="number" id="daily-goal-input" class="w-full p-2 mb-4 border border-gray-300 rounded-lg dark:bg-[#454B4E] dark:text-[#d3d3d3] dark:border-[#3f4347]" placeholder="Enter daily goal (ml)">
+                <button id="save-goal-btn" class="bg-[#337EA9] hover:bg-[#2e6da4] text-white font-bold py-2 px-4 rounded-lg dark:bg-[#3f4347] dark:hover:bg-[#3a3f45]">Save</button>
+                <button id="cancel-goal-btn" class="bg-[#D44C47] hover:bg-[#c43a3f] text-white font-bold py-2 px-4 rounded-lg ml-4 dark:bg-[#3f4347] dark:hover:bg-[#3a3f45]">Cancel</button>
+            </div>
+        </div>
+        <!-- Heat map -->
+        <div id="heat-map" class="flex flex-wrap justify-center mt-4">
+            <!-- Heat map elements will be generated dynamically -->
+        </div>
+    </div>
+
+    <script>
+        let intervalId;
+        let storedDailyGoal = localStorage.getItem('dailyGoal');
+        let storedHistory = localStorage.getItem('history');
+        let dailyGoal = storedDailyGoal ? parseInt(storedDailyGoal) : 0;
+        let history = storedHistory ? JSON.parse(storedHistory) : [];
+        let currentIntake = 0;
+        let currentDate = new Date();
+
+        // Filter history to only include the last 14 days
+        history = history.filter(entry => {
+            const entryDate = new Date(entry.date);
+            const diffTime = Math.abs(currentDate - entryDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= 14;
+        });
+
+        // Calculate current intake for the current day
+        const currentDayHistory = history.filter(entry => {
+            const entryDate = new Date(entry.date);
+            return entryDate.toDateString() === currentDate.toDateString();
+        });
+        currentIntake = currentDayHistory.reduce((acc, entry) => acc + entry.amount, 0);
+
+        document.getElementById('current-intake').innerText = `${currentIntake}ml`;
+        document.getElementById('goal').innerText = `Daily Goal: ${dailyGoal}ml`;
+
+        document.getElementById('set-goal-btn').addEventListener('click', () => {
+            document.getElementById('goal-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('cancel-goal-btn').addEventListener('click', () => {
+            document.getElementById('goal-modal').classList.add('hidden');
+        });
+
+        document.getElementById('save-goal-btn').addEventListener('click', () => {
+            dailyGoal = parseInt(document.getElementById('daily-goal-input').value);
+            localStorage.setItem('dailyGoal', dailyGoal);
+            document.getElementById('goal').innerText = `Daily Goal: ${dailyGoal}ml`;
+            document.getElementById('goal-modal').classList.add('hidden');
+            generateHeatMap();
+        });
+
+        document.getElementById('small-glass-btn').addEventListener('click', () => {
+            currentIntake += 100;
+            history.push({ date: new Date(), amount: 100 });
+            document.getElementById('current-intake').innerText = `${currentIntake}ml`;
+            generateHeatMap();
+            localStorage.setItem('history', JSON.stringify(history));
+        });
+
+        document.getElementById('medium-glass-btn').addEventListener('click', () => {
+            currentIntake += 200;
+            history.push({ date: new Date(), amount: 200 });
+            document.getElementById('current-intake').innerText = `${currentIntake}ml`;
+            generateHeatMap();
+            localStorage.setItem('history', JSON.stringify(history));
+        });
+
+        document.getElementById('bottle-btn').addEventListener('click', () => {
+            currentIntake += 500;
+            history.push({ date: new Date(), amount: 500 });
+            document.getElementById('current-intake').innerText = `${currentIntake}ml`;
+            generateHeatMap();
+            localStorage.setItem('history', JSON.stringify(history));
+        });
+
+        function generateHeatMap() {
+            const heatMapContainer = document.getElementById('heat-map');
+            heatMapContainer.innerHTML = '';
+            const heatMapRow = document.createElement('div');
+            heatMapRow.className = 'flex justify-center';
+            for (let i = 0; i < 14; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const amount = history.filter(entry => {
+                    const entryDate = new Date(entry.date);
+                    return entryDate.toDateString() === date.toDateString();
+                }).reduce((acc, entry) => acc + entry.amount, 0);
+                const percentage = (amount / dailyGoal) * 100;
+                let color;
+                if (percentage < 25) {
+                    color = '#E7F3F8';
+                } else if (percentage < 50) {
+                    color = '#C5E1F5';
+                } else if (percentage < 75) {
+                    color = '#87CEEB';
+                } else {
+                    color = '#337EA9';
+                }
+                const heatMapElement = document.createElement('div');
+                heatMapElement.style.width = '16px';
+                heatMapElement.style.height = '16px';
+                heatMapElement.style.background = color;
+                heatMapElement.style.margin = '2px';
+                if (i < 7) {
+                    heatMapRow.appendChild(heatMapElement);
+                } else {
+                    const secondRow = document.createElement('div');
+                    secondRow.className = 'flex justify-center mt-2';
+                    secondRow.appendChild(heatMapElement);
+                    for (let j = i + 1; j < 14; j++) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - j);
+                        const amount = history.filter(entry => {
+                            const entryDate = new Date(entry.date);
+                            return entryDate.toDateString() === date.toDateString();
+                        }).reduce((acc, entry) => acc + entry.amount, 0);
+                        const percentage = (amount / dailyGoal) * 100;
+                        let color;
+                        if (percentage < 25) {
+                            color = '#E7F3F8';
+                        } else if (percentage < 50) {
+                            color = '#C5E1F5';
+                        } else if (percentage < 75) {
+                            color = '#87CEEB';
+                        } else {
+                            color = '#337EA9';
+                        }
+                        const heatMapElement = document.createElement('div');
+                        heatMapElement.style.width = '16px';
+                        heatMapElement.style.height = '16px';
+                        heatMapElement.style.background = color;
+                        heatMapElement.style.margin = '2px';
+                        secondRow.appendChild(heatMapElement);
+                    }
+                    heatMapContainer.appendChild(heatMapRow);
+                    heatMapContainer.appendChild(secondRow);
+                    return;
+                }
+            }
+            heatMapContainer.appendChild(heatMapRow);
+        }
+
+        generateHeatMap();
+    </script>
+</body>
+</html>
