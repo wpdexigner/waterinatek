@@ -127,16 +127,20 @@
                     const entryDate = new Date(entry.date);
                     return entryDate.toDateString() === date.toDateString();
                 }).reduce((acc, entry) => acc + entry.amount, 0);
-                const percentage = (amount / dailyGoal) * 100;
                 let color;
-                if (percentage < 25) {
+                if (dailyGoal === 0) {
                     color = '#E7F3F8';
-                } else if (percentage < 50) {
-                    color = '#C5E1F5';
-                } else if (percentage < 75) {
-                    color = '#87CEEB';
                 } else {
-                    color = '#337EA9';
+                    const percentage = (amount / dailyGoal) * 100;
+                    if (percentage < 25) {
+                        color = '#E7F3F8';
+                    } else if (percentage < 50) {
+                        color = '#C5E1F5';
+                    } else if (percentage < 75) {
+                        color = '#87CEEB';
+                    } else {
+                        color = '#337EA9';
+                    }
                 }
                 const heatMapElement = document.createElement('div');
                 heatMapElement.style.width = '16px';
@@ -156,16 +160,20 @@
                             const entryDate = new Date(entry.date);
                             return entryDate.toDateString() === date.toDateString();
                         }).reduce((acc, entry) => acc + entry.amount, 0);
-                        const percentage = (amount / dailyGoal) * 100;
                         let color;
-                        if (percentage < 25) {
+                        if (dailyGoal === 0) {
                             color = '#E7F3F8';
-                        } else if (percentage < 50) {
-                            color = '#C5E1F5';
-                        } else if (percentage < 75) {
-                            color = '#87CEEB';
                         } else {
-                            color = '#337EA9';
+                            const percentage = (amount / dailyGoal) * 100;
+                            if (percentage < 25) {
+                                color = '#E7F3F8';
+                            } else if (percentage < 50) {
+                                color = '#C5E1F5';
+                            } else if (percentage < 75) {
+                                color = '#87CEEB';
+                            } else {
+                                color = '#337EA9';
+                            }
                         }
                         const heatMapElement = document.createElement('div');
                         heatMapElement.style.width = '16px';
